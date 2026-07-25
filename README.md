@@ -136,6 +136,15 @@ Liveness check.
 { "status": "ok" }
 ```
 
+### `GET /`
+
+HTML landing page with links to docs, health check, and the architecture doc.
+
+### `GET /architecture`
+
+Renders the Task B scale-architecture document (`app/static/architecture.md`)
+as an HTML page with its diagram, for the live-build submission requirement.
+
 ## Design notes
 
 - **Caching** is keyed on a normalized form of the URL (lowercased
