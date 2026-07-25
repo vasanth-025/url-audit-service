@@ -4,12 +4,15 @@ import asyncio
 import time
 import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import httpx
+import markdown
 import redis.asyncio as redis
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
 from app.audit import run_audit
@@ -72,6 +75,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="URL Audit Service", version="1.0.0", lifespan=lifespan)
+
+_STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
 
 
 # ---------------------------------------------------------------------------
@@ -196,8 +202,9 @@ _LANDING_PAGE_HTML = """
   <h1>URL Audit Service</h1>
   <p>A production-hardened API that audits a URL and reports status, timing, headers, and title.</p>
   <p>
-    See interactive docs at <code><a href="/docs">/docs</a></code>
-    or check liveness at <code><a href="/health">/health</a></code>.
+    See interactive docs at <code><a href="/docs">/docs</a></code>,
+    check liveness at <code><a href="/health">/health</a></code>,
+    or read the <a href="/architecture">scale architecture doc</a>.
   </p>
   <footer>
     Built for Digital Heroes Training Task &mdash;
@@ -211,6 +218,67 @@ _LANDING_PAGE_HTML = """
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def landing_page() -> str:
     return _LANDING_PAGE_HTML
+
+
+_ARCHITECTURE_DOC_HTML = markdown.markdown(
+    (_STATIC_DIR / "architecture.md").read_text(encoding="utf-8"),
+    extensions=["tables", "fenced_code"],
+)
+
+_ARCHITECTURE_PAGE_HTML = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Architecture &mdash; URL Audit Service at Scale</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 800px;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }}
+    h1, h2, h3 {{ line-height: 1.3; }}
+    table {{ border-collapse: collapse; width: 100%; margin: 1rem 0; }}
+    th, td {{ border: 1px solid #ddd; padding: 0.5rem 0.75rem; text-align: left; }}
+    th {{ background: #f7f7f7; }}
+    code {{ background: #f2f2f2; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.9em; }}
+    pre {{ background: #f2f2f2; padding: 1rem; border-radius: 6px; overflow-x: auto; }}
+    img {{ max-width: 100%; height: auto; }}
+    .diagram {{ text-align: center; margin: 2rem 0; }}
+    footer {{
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e0e0e0;
+      font-size: 0.85rem;
+      color: #666;
+    }}
+    footer a {{ color: #666; }}
+    a {{ color: #0a6cff; }}
+    .backlink {{ margin-bottom: 2rem; font-size: 0.9rem; }}
+  </style>
+</head>
+<body>
+  <p class="backlink"><a href="/">&larr; back to service home</a></p>
+  <div class="diagram">
+    <img src="/static/architecture-diagram.svg" alt="URL audit service architecture at scale: client to API gateway to stateless FastAPI tier to Redis cache or task queue to worker pool to PostgreSQL" />
+  </div>
+  {_ARCHITECTURE_DOC_HTML}
+  <footer>
+    Built for Digital Heroes Training Task &mdash;
+    <a href="https://digitalheroesco.com" target="_blank" rel="noopener">digitalheroesco.com</a>
+  </footer>
+</body>
+</html>
+"""
+
+
+@app.get("/architecture", response_class=HTMLResponse, include_in_schema=False)
+async def architecture_page() -> str:
+    return _ARCHITECTURE_PAGE_HTML
 
 
 @app.get("/health")
