@@ -9,7 +9,7 @@ import httpx
 import redis.asyncio as redis
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import ValidationError
 
 from app.audit import run_audit
@@ -159,6 +159,60 @@ async def enforce_rate_limit(request: Request) -> None:
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+_LANDING_PAGE_HTML = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>URL Audit Service</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 640px;
+      margin: 4rem auto;
+      padding: 0 1.5rem;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+    h1 { font-size: 1.5rem; }
+    code {
+      background: #f2f2f2;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e0e0e0;
+      font-size: 0.85rem;
+      color: #666;
+    }
+    footer a { color: #666; }
+  </style>
+</head>
+<body>
+  <h1>URL Audit Service</h1>
+  <p>A production-hardened API that audits a URL and reports status, timing, headers, and title.</p>
+  <p>
+    See interactive docs at <code><a href="/docs">/docs</a></code>
+    or check liveness at <code><a href="/health">/health</a></code>.
+  </p>
+  <footer>
+    Built for Digital Heroes Training Task &mdash;
+    <a href="https://digitalheroesco.com" target="_blank" rel="noopener">digitalheroesco.com</a>
+  </footer>
+</body>
+</html>
+"""
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def landing_page() -> str:
+    return _LANDING_PAGE_HTML
+
+
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
