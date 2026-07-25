@@ -22,4 +22,4 @@ def test_architecture_page_renders_doc_diagram_and_footer(client):
 def test_architecture_diagram_svg_is_served(client):
     resp = client.get("/static/architecture-diagram.svg")
     assert resp.status_code == 200
-    assert "svg" in resp.headers["content-type"]
+    assert "svg" in resp.headers["content-type"] 
