@@ -98,7 +98,7 @@ Every request carries a request ID generated at the gateway, propagated through 
 - Deploys are versioned and rolled out with canary/rolling deployment (a small percentage of API pods on the new version first), watching the SLA and error-rate metrics above during the canary window before completing the rollout.
 - Given the API tier is stateless, rollback is a redeploy of the previous image version — no data migration to reverse in the common case.
 - Worker deployments roll back independently from the API tier; since job records and their status live in Postgres, a worker-version rollback simply resumes processing the queue from wherever it was, with no job loss.
-- If a deploy introduces a state schema change (rare, but possible for the job/result tables), migrations are written to be backward-compatible for at least one release (additive columns, no destructive changes) so a rollback of the application code doesn't require an accompanying reverse migration.
+- If a deploy introduces a state schema change (rare, but possible for the job/result tables), migrations are written to be backward-compatible for at least one release (additive columns, no destructive changes) so a rollback of the application code doesn't require an accompanying reverse migration. 
 
 ---
 
